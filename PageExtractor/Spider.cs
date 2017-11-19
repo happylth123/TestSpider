@@ -11,6 +11,7 @@ using System.Windows.Threading;
 using System.Threading;
 using System.Data;
 using HtmlAgilityPack;
+using PageExtractor.Models;
 
 namespace PageExtractor
 {
@@ -605,6 +606,8 @@ namespace PageExtractor
 
             int count = 0;
 
+            var jobinfos = new List<JobInfo>();
+
             foreach (HtmlNode table in doc.DocumentNode.SelectNodes("//table"))
             {
                 foreach (HtmlNode row in table.SelectNodes("tr"))
@@ -615,19 +618,15 @@ namespace PageExtractor
 
                     if (!row.InnerText.Contains("举办日期"))
                     {
-                        foreach (var cell in row.SelectNodes("td"))
-                        {
-                            //if ((count % 2 == 0))
-                            //{
-                            //    dr["Name"] = cell.InnerText.Replace("&nbsp;", " ");
-                            //}
-                            //else
-                            //{
-                            //    dr["Value"] = cell.InnerText.Replace("&nbsp;", " ");
+                        var jobInfo = new JobInfo();
+                        //foreach (var cell in row.SelectNodes("td"))
+                        //{
+                        //    jobInfo.CollegeName = cell.InnerText;
 
-                            //    dt.Rows.Add(dr);
-                            //}
-                            //count++;
+                        //}
+                        for (int i = 0; i < row.SelectNodes("td").Count(); i++)
+                        {
+                            jobInfo.CollegeName = row.SelectNodes("td")[i].InnerText;
                         }
                     }
 

@@ -6,6 +6,9 @@ using System.Web;
 using System.Net;
 using System.IO;
 using System.Text.RegularExpressions;
+using System.Data;
+using HtmlAgilityPack;
+using PageExtractor.Models;
 
 namespace Test
 {
@@ -35,9 +38,13 @@ namespace Test
 
                 try
                 {
+                    Encoding GB18030 = Encoding.GetEncoding("GB18030");   // GB18030兼容GBK和GB2312
+                    Encoding _encoding = GB18030;
+
                     string html = null;
+
                     HttpWebResponse res = (HttpWebResponse)req.GetResponse();
-                    using (StreamReader reader = new StreamReader(res.GetResponseStream()))
+                    using (StreamReader reader = new StreamReader(res.GetResponseStream(), _encoding))
                     {
                         html = reader.ReadToEnd();
                         if (!string.IsNullOrEmpty(html))
@@ -45,6 +52,9 @@ namespace Test
                             Console.WriteLine("Download OK!\n");
                         }
                     }
+
+                    GetJobInfo(html);
+
                     string[] links = GetLinks(html);
                     AddUrls(links, depth + 1, baseUrl, unload, loaded);
                 }
@@ -110,6 +120,113 @@ namespace Test
                     }
                 }
             }
+        }
+
+        private static void GetJobInfo(string html)
+        {
+            HtmlAgilityPack.HtmlDocument doc = new HtmlAgilityPack.HtmlDocument();
+
+            doc.LoadHtml(html);
+
+            var dt = new DataTable();
+            dt.Columns.Add("Name", typeof(string));
+            dt.Columns.Add("Value", typeof(string));
+
+            int count = 0;
+
+            var jobinfos = new List<JobInfo>();
+
+            foreach (HtmlNode table in doc.DocumentNode.SelectNodes("//table"))
+            {
+                foreach (HtmlNode row in table.SelectNodes("tr"))
+                {
+                    if (!row.InnerText.Contains("举办日期"))
+                    {
+                        var jobInfo = new JobInfo();
+                        //foreach (var cell in row.SelectNodes("td"))
+                        //{
+                        //    jobInfo.CollegeName = cell.InnerText;
+
+                        //}
+                        for (int i = 0; i < row.SelectNodes("td").Count(); i++)
+                        {
+                            jobInfo.CollegeName = row.SelectNodes("td")[i].InnerText;
+                        }
+                    }
+                }
+
+
+                HttpWebRequest req = (HttpWebRequest)WebRequest.Create("http://my.yingjiesheng.com/xjh-000-818-836.html");
+                req.Method = "GET";
+                req.Accept = "text/html";
+                req.UserAgent = "Mozilla/4.0 (compatible; MSIE 8.0; Windows NT 6.1; Trident/4.0)";
+
+                try
+                {
+                    Encoding GB18030 = Encoding.GetEncoding("GB18030");   // GB18030兼容GBK和GB2312
+                    Encoding _encoding = GB18030;
+
+                    string html2 = null;
+
+                    HttpWebResponse res = (HttpWebResponse)req.GetResponse();
+                    using (StreamReader reader = new StreamReader(res.GetResponseStream(), _encoding))
+                    {
+                        html2 = reader.ReadToEnd();
+                        if (!string.IsNullOrEmpty(html2))
+                        {
+                            Console.WriteLine("Download OK!\n");
+                        }
+                    }
+
+                    GetJobInfo2(html2);
+
+                    string[] links = GetLinks(html2);
+                }
+                catch (WebException we)
+                {
+                    Console.WriteLine(we.Message);
+                }
+
+
+
+            }
+        }
+
+        private static void GetJobInfo2(string html)
+        {
+            HtmlAgilityPack.HtmlDocument doc = new HtmlAgilityPack.HtmlDocument();
+
+            doc.LoadHtml(html);
+
+            var dt = new DataTable();
+            dt.Columns.Add("Name", typeof(string));
+            dt.Columns.Add("Value", typeof(string));
+
+            int count = 0;
+
+            var jobinfos = new List<JobInfo>();
+
+            var contents = doc.DocumentNode.SelectNodes("//*[@id='wrap']/div[2]/div[1]/div[3]/div[2]/div[1]");
+
+            //foreach (HtmlNode table in doc.DocumentNode.SelectNodes("//table"))
+            //{
+            //    foreach (HtmlNode row in table.SelectNodes("tr"))
+            //    {
+            //        if (!row.InnerText.Contains("举办日期"))
+            //        {
+            //            var jobInfo = new JobInfo();
+            //            //foreach (var cell in row.SelectNodes("td"))
+            //            //{
+            //            //    jobInfo.CollegeName = cell.InnerText;
+
+            //            //}
+            //            for (int i = 0; i < row.SelectNodes("td").Count(); i++)
+            //            {
+            //                jobInfo.CollegeName = row.SelectNodes("td")[i].InnerText;
+            //            }
+            //        }
+            //    }
+            //}
         }
     }
 }
